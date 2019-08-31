@@ -1,13 +1,13 @@
 every_lambda:
     environment:
-        VAR_NAME: neat
+        HOME: '/tmp'
 
-aws_fullframe_fits:
-    environment:
-        VAR_NAME: awesome
-        OTHER_ENV_VAR_NAME: neat
-
-find_mean:
-    environment:
-        VAR_NAME: awesome
+# aws_fullframe_fits:
+#     environment:
+#         VAR_NAME: awesome
+#         OTHER_ENV_VAR_NAME: neat
+# 
+# find_mean:
+#     environment:
+#         VAR_NAME: awesome
 

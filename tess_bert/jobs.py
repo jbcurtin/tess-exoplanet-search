@@ -1,5 +1,5 @@
-from bert import binding, constants, utils
-    
+from bert import binding, constants, utils, shortcuts
+
 @binding.follow('noop')
 def aws_fullframe_fits():
     """
@@ -10,20 +10,20 @@ def aws_fullframe_fits():
     import boto3
     import os
     import typing
-    
+
     import numpy as np
-    
+
     from astropy.io import fits
     from astroquery.mast import Observations
-    
-    from tess_bert import shortcuts
-    
+
+    from tess_bert import shortcuts as tess_shortcuts
+
     from urllib.parse import urlparse, ParseResult
 
     work_queue, done_queue, ologger = utils.comm_binders(aws_fullframe_fits)
 
     OBS_ID: str = 'tess-s0001-1-1'
-    DATA_DIR: str = os.path.join(os.getcwd(), 'data')
+    DATA_DIR: str = os.path.join(shortcuts.getcwd(), 'data')
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 
@@ -46,6 +46,24 @@ def aws_fullframe_fits():
 
 @binding.follow(aws_fullframe_fits, pipeline_type=constants.PipelineType.CONCURRENT, workers=16)
 def find_mean():
+    import boto3
+    import os
+    import typing
+
+    import numpy as np
+
+    from astropy.io import fits
+    from astroquery.mast import Observations
+
+    from tess_bert import shortcuts as tess_shortcuts
+
+    from urllib.parse import urlparse, ParseResult
+    OBS_ID: str = 'tess-s0001-1-1'
+    DATA_DIR: str = os.path.join(shortcuts.getcwd(), 'data')
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+
+
     work_queue, done_queue, ologger = utils.comm_binders(find_mean)
     for details in work_queue:
         bucket: 'boto3.resources.factory.s3.Bucket' = boto3.resource('s3').Bucket(name=details['bucket'])
@@ -63,11 +81,34 @@ def find_mean():
 
 @binding.follow(find_mean)
 def find_final_mean():
+    import boto3
+    import os
+    import typing
+
+    import numpy as np
+
+    from astropy.io import fits
+    from astroquery.mast import Observations
+
+    from tess_bert import shortcuts as tess_shortcuts
+
+    from urllib.parse import urlparse, ParseResult
+    OBS_ID: str = 'tess-s0001-1-1'
+    DATA_DIR: str = os.path.join(shortcuts.getcwd(), 'data')
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+
+
     work_queue, done_queue, ologger = utils.comm_binders(find_final_mean)
     indiv_means: typing.List[float] = []
     for details in work_queue:
         indiv_means.append(details['indiv_mean'])
 
-    final_mean: typing.Any = np.mean([item for item in map(lambda x: float(x), indiv_means)])
-    ologger.info(f'Final Mean[{final_mean}]')
+    if indiv_means:
+        ologger.info(f'indiv_means len[{len(indiv_means)}]')
+        ologger.info(f'indiv_means 0[{indiv_means[0]}]')
+        final_mean: typing.Any = np.mean([item for item in map(lambda x: float(x), indiv_means)])
+        ologger.info(f'Final Mean[{final_mean}]')
+        details['final-mean'] = str(final_mean)
+        done_queue.put(details)
 
